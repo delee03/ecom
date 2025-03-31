@@ -33,27 +33,28 @@
 
 from airflow.decorators import dag
 from airflow.operators.python import PythonOperator
-from pendulum import datetime,timedelta
+from airflow.operators.empty import EmptyOperator
+from pendulum import datetime,duration
 
 @dag(
-    start_date=datetime(2025,3,31),
-    schedule='@daily',
-    catchup=False,
+    start_date=datetime(2025, 3 ,15),
+    schedule='@weekly',
+    catchup=True,
     description="This DAG processes ecommerce data pipline",
     tags=(["team_a", "ecom", "pii"]),
     default_args={"retries": 1},
-    dagrun_timeout=timedelta(minutes=20),
+    dagrun_timeout=duration(minutes=20),
     max_consecutive_failed_dag_runs=2,
     # max_active_runs=1,
 )
 def ecom():
-    ta = PythonOperator(
+    ta = EmptyOperator(
         task_id='ta',
     )
 
-    tb = PythonOperator(    
-        task_id='tb',
-    )
+    # tb = PythonOperator(    
+    #     task_id='tb',
+    # )
 
 ecom()
 
