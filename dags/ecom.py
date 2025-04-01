@@ -35,11 +35,20 @@ from airflow.decorators import dag
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
 from pendulum import datetime,duration
+from airflow.datasets import Dataset
+
+DATASET_COCKTAIL = Dataset('/tmp/cocktail.json')
+DATASET_MOCKTAIL = Dataset('/tmp/mocktail.json')
+
+def _process_data():
+    print("Processing data from datasets...")
+
+
 
 @dag(
-    start_date=datetime(2025, 3 ,15),
-    schedule='@weekly',
-    catchup=True,
+    start_date=datetime(2025, 3, 15),
+    schedule=[DATASET_COCKTAIL, DATASET_MOCKTAIL], #Or conditional schedule
+    catchup=False,
     description="This DAG processes ecommerce data pipline",
     tags=(["team_a", "ecom", "pii"]),
     default_args={"retries": 1},
@@ -52,9 +61,12 @@ def ecom():
         task_id='ta',
     )
 
-    # tb = PythonOperator(    
-    #     task_id='tb',
-    # )
+    tb = PythonOperator(
+        task_id='tb',
+        python_callable=_process_data,
+    )
+
+    ta >> tb
 
 ecom()
 
