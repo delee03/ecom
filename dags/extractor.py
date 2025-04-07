@@ -2,6 +2,7 @@ from airflow.decorators import dag
 from pendulum import datetime
 from airflow.operators.python import PythonOperator 
 from airflow.datasets import Dataset
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,11 +21,11 @@ def _get_cocktail():
 def _get_mocktail():
     import requests
     api = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?a=Non_Alcoholic"
-    response = requests.get(api)
+    response = requests.get(api)     
     with open(DATASET_MOCKTAIL.uri, 'wb') as f:
         f.write(response.content)
-    logger.info(f"Updated {DATASET_MOCKTAIL.uri}, now failing deliberately")
-    raise Exception("Simulated failure in get_mocktail")  # Force failure to test
+    logger.info(f"Updated {DATASET_MOCKTAIL.uri}, successfully")
+
 
 @dag(
     start_date=datetime(2025, 3, 3),
@@ -32,6 +33,7 @@ def _get_mocktail():
     catchup=False,
 )
 def extractor():
+    
     get_cocktail = PythonOperator(
         task_id="get_cocktail",
         python_callable=_get_cocktail,
@@ -43,5 +45,6 @@ def extractor():
         python_callable=_get_mocktail,
         outlets=[DATASET_MOCKTAIL],
     )
+    
 
 extractor()
