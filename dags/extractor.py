@@ -1,46 +1,31 @@
 from airflow.decorators import dag 
-from pendulum import datetime
+from pendulum import datetime, duration
 from airflow.operators.python import PythonOperator 
-from airflow.datasets import Dataset
 from include.datasets import DATASET_COCKTAIL, DATASET_MOCKTAIL
+from include.tasks import _get_cocktail, _get_mocktail, _check_size
+from include.extractor.callbacks import _handle_failed_dagrun, _handle_check_size
 
-import logging
 
-logger = logging.getLogger(__name__)
-
-def _get_cocktail(ti=None):
-    import requests
-    api = "https://www.thecocktaildb.com/api/json/v1/1/random.php"
-    response = requests.get(api)
-    with open(DATASET_COCKTAIL.uri, 'wb') as f:
-        f.write(response.content)
-    logger.info(f"Successfully updated {DATASET_COCKTAIL.uri}")
-    ti.xcom_push(key='request_size', value=len(response.content))
-
-def _get_mocktail():
-    import requests
-    api = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?a=Non_Alcoholic"
-    response = requests.get(api)     
-    with open(DATASET_MOCKTAIL.uri, 'wb') as f:
-        f.write(response.content)
-    logger.info(f"Updated {DATASET_MOCKTAIL.uri} successfully")
- 
-def _check_size(ti = None):
-    size = ti.xcom_pull(key='request_size', task_ids='get_cocktail')
-    logger.info(f"Loggin _ Size of request is {size}")
-    # Run this to check local and UI  : astro dev run dags test dag_id date_range
+ # Run this to check local and UI  : astro dev run dags test dag_id date_range
 
 @dag(
     start_date=datetime(2025, 3, 3),
     schedule='@daily',
     catchup=False,
+    default_args={
+        "retries": 2, 
+        "retry_delay": duration(seconds=2), 
+    },
+    on_failure_callback= _handle_failed_dagrun
 )
 def extractor():
     
     get_cocktail = PythonOperator(
         task_id="get_cocktail",
         python_callable=_get_cocktail,
-        outlets=[DATASET_COCKTAIL],
+        outlets=[DATASET_COCKTAIL],   
+        retry_exponential_backoff = True, # allow progressive longer waits between retries first retries is 2s next 4s ... should using at API call or queries db
+        max_retry_delay = duration(minutes=5),
     )
     
     # get_mocktail = PythonOperator(
@@ -52,6 +37,7 @@ def extractor():
     check_size = PythonOperator(
         task_id="check_size",
         python_callable=_check_size,
+        on_failure_callback= _handle_check_size
     )
     
     get_cocktail >> check_size

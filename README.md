@@ -39,6 +39,8 @@ You should also be able to access your Postgres Database at 'localhost:5432/post
 4. Take notes
    Keep in mind that having the .airlfowignore file in Dags folder is great to save resources avoid airflow parse it to Dag file or not. Airflow Scheduler will ignore it
 
+    Way 2: create \*\* ** _init_\*\***.py \*\* file in include to tell python that is package python -> allow to import modules from that
+
 If you have an Astronomer account, pushing code to a Deployment on Astronomer is simple. For deploying instructions, refer to Astronomer documentation: https://www.astronomer.io/docs/astro/deploy-code/
 
 # Contact
