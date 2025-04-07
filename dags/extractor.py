@@ -10,13 +10,14 @@ logger = logging.getLogger(__name__)
 DATASET_COCKTAIL = Dataset('/tmp/cocktail.json')
 DATASET_MOCKTAIL = Dataset('/tmp/mocktail.json')
 
-def _get_cocktail():
+def _get_cocktail(ti=None):
     import requests
     api = "https://www.thecocktaildb.com/api/json/v1/1/random.php"
     response = requests.get(api)
     with open(DATASET_COCKTAIL.uri, 'wb') as f:
         f.write(response.content)
     logger.info(f"Successfully updated {DATASET_COCKTAIL.uri}")
+    ti.xcom_push(key='request_size', val=len(response.content))
 
 def _get_mocktail():
     import requests
@@ -26,6 +27,11 @@ def _get_mocktail():
         f.write(response.content)
     logger.info(f"Updated {DATASET_MOCKTAIL.uri} successfully")
  
+def _check_size(ti = None):
+    size = ti.xcom_pull(key='request_size', task_ids='get_cocktail')
+    logger.info(f"Loggin _ Size of request is {size}")
+    print(size)
+    
 
 @dag(
     start_date=datetime(2025, 3, 3),
@@ -46,5 +52,11 @@ def extractor():
         outlets=[DATASET_MOCKTAIL],
     )
     
+    check_size = PythonOperator(
+        task_id="check_size",
+        python_callable=_check_size,
+    )
+    
+    get_cocktail >> get_mocktail >> check_size
 
 extractor()
