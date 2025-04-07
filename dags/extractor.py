@@ -1,8 +1,8 @@
-from airflow.decorators import dag 
+from airflow.decorators import dag, task_group
 from pendulum import datetime, duration
 from airflow.operators.python import PythonOperator 
 from include.datasets import DATASET_COCKTAIL, DATASET_MOCKTAIL
-from include.tasks import _get_cocktail, _get_mocktail, _check_size
+from include.tasks import _get_cocktail, _get_mocktail, _check_size, _validate_cocktail_data
 from include.extractor.callbacks import _handle_failed_dagrun, _handle_check_size
 
 
@@ -28,6 +28,29 @@ def extractor():
         retry_exponential_backoff = True, # allow progressive longer waits between retries first retries is 2s next 4s ... should using at API call or queries db
         max_retry_delay = duration(minutes=5),
     )
+    #Can have using nested task_group
+    @task_group(
+        default_args={
+            "retries": 2,
+            "retry_delay": duration(seconds=2),
+        },
+    )
+    def checks():
+        check_size = PythonOperator(
+            task_id="check_size",
+            python_callable=_check_size,
+            on_failure_callback= _handle_check_size
+        )
+    
+        validate_cocktail_data = PythonOperator(
+            task_id="validate_cocktail_data",
+            python_callable=_validate_cocktail_data,
+            # This task depends on the Dataset DATASET_COCKTAIL
+            inlets=[DATASET_COCKTAIL],
+        )
+        
+        check_size >> validate_cocktail_data
+     
     
     # get_mocktail = PythonOperator(
     #     task_id="get_mocktail",
@@ -35,12 +58,10 @@ def extractor():
     #     outlets=[DATASET_MOCKTAIL],
     # )
     
-    check_size = PythonOperator(
-        task_id="check_size",
-        python_callable=_check_size,
-        on_failure_callback= _handle_check_size
-    )
+    # def store_value(ti=None):
+    #     ti.xcom_pull(key="abc", task_ids="checks.validate_cocktail_data") => syntax for using xcom pull from the task within task-group
     
-    get_cocktail >> check_size
+  
+    get_cocktail >> checks()
 
 extractor()
