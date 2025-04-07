@@ -17,7 +17,7 @@ def _get_cocktail(ti=None):
     with open(DATASET_COCKTAIL.uri, 'wb') as f:
         f.write(response.content)
     logger.info(f"Successfully updated {DATASET_COCKTAIL.uri}")
-    ti.xcom_push(key='request_size', val=len(response.content))
+    ti.xcom_push(key='request_size', value=len(response.content))
 
 def _get_mocktail():
     import requests
@@ -30,8 +30,8 @@ def _get_mocktail():
 def _check_size(ti = None):
     size = ti.xcom_pull(key='request_size', task_ids='get_cocktail')
     logger.info(f"Loggin _ Size of request is {size}")
-    print(size)
-    
+    print(f"Loggig size is  {size}")
+    # Run this to check local and UI  : astro dev run dags test dag_id date_range
 
 @dag(
     start_date=datetime(2025, 3, 3),
@@ -46,17 +46,17 @@ def extractor():
         outlets=[DATASET_COCKTAIL],
     )
     
-    get_mocktail = PythonOperator(
-        task_id="get_mocktail",
-        python_callable=_get_mocktail,
-        outlets=[DATASET_MOCKTAIL],
-    )
+    # get_mocktail = PythonOperator(
+    #     task_id="get_mocktail",
+    #     python_callable=_get_mocktail,
+    #     outlets=[DATASET_MOCKTAIL],
+    # )
     
     check_size = PythonOperator(
         task_id="check_size",
         python_callable=_check_size,
     )
     
-    get_cocktail >> get_mocktail >> check_size
+    get_cocktail >> check_size
 
 extractor()

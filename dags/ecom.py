@@ -47,8 +47,8 @@ def _process_data():
 
 @dag(
     start_date=datetime(2025, 3, 15),
-    schedule=[DATASET_COCKTAIL, DATASET_MOCKTAIL], #And conditional schedule
-    #schedule=(DATASET_COCKTAIL | DATASET_MOCKTAIL), #OR conditional schedule
+    #schedule=[DATASET_COCKTAIL, DATASET_MOCKTAIL], #And conditional schedule
+    schedule=(DATASET_COCKTAIL | DATASET_MOCKTAIL), #OR conditional schedule
     catchup=False,
     description="This DAG processes ecommerce data pipline",
     tags=(["team_a", "ecom", "pii"]),
