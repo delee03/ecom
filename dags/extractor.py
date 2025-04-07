@@ -23,8 +23,8 @@ def _get_mocktail():
     response = requests.get(api)
     with open(DATASET_MOCKTAIL.uri, 'wb') as f:
         f.write(response.content)
-    logger.info(f"Updated {DATASET_MOCKTAIL.uri}, now failing deliberately")
-    raise Exception("Simulated failure in get_mocktail")  # Force failure to test
+    logger.info(f"Updated {DATASET_MOCKTAIL.uri} successfully")
+ 
 
 @dag(
     start_date=datetime(2025, 3, 3),
