@@ -35,10 +35,9 @@ from airflow.decorators import dag
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
 from pendulum import datetime,duration
-from airflow.datasets import Dataset
+from include.datasets import DATASET_COCKTAIL, DATASET_MOCKTAIL
 
-DATASET_COCKTAIL = Dataset('/tmp/cocktail.json')
-DATASET_MOCKTAIL = Dataset('/tmp/mocktail.json')
+
 
 def _process_data():
     print("Processing data from datasets...")

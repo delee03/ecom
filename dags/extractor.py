@@ -2,13 +2,11 @@ from airflow.decorators import dag
 from pendulum import datetime
 from airflow.operators.python import PythonOperator 
 from airflow.datasets import Dataset
+from include.datasets import DATASET_COCKTAIL, DATASET_MOCKTAIL
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-DATASET_COCKTAIL = Dataset('/tmp/cocktail.json')
-DATASET_MOCKTAIL = Dataset('/tmp/mocktail.json')
 
 def _get_cocktail(ti=None):
     import requests
@@ -30,7 +28,6 @@ def _get_mocktail():
 def _check_size(ti = None):
     size = ti.xcom_pull(key='request_size', task_ids='get_cocktail')
     logger.info(f"Loggin _ Size of request is {size}")
-    print(f"Loggig size is  {size}")
     # Run this to check local and UI  : astro dev run dags test dag_id date_range
 
 @dag(
