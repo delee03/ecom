@@ -1,9 +1,13 @@
-from airflow.decorators import dag, task_group
+from airflow.decorators import dag, task_group, task
 from pendulum import datetime, duration
 from airflow.operators.python import PythonOperator 
 from include.datasets import DATASET_COCKTAIL, DATASET_MOCKTAIL
 from include.tasks import _get_cocktail, _get_mocktail, _check_size, _validate_cocktail_data
 from include.extractor.callbacks import _handle_failed_dagrun, _handle_check_size
+import json
+import json
+import json
+import json
 
 
  # Run this to check local and UI  : astro dev run dags test dag_id date_range
@@ -51,7 +55,21 @@ def extractor():
         
         check_size >> validate_cocktail_data
      
+    @task.branch()
+    def branch_cocktail_type():
+        with open(DATASET_COCKTAIL.uri, 'r') as f:
+            data = json.load(f)
+            if data['drinks'][0]['strAlcoholic'] == 'Alcoholic':
+                return "alcoholic_drink"
+            return "non_alcoholic_drink"
     
+    @task()
+    def alcoholic_drink():
+        print("Alcoholic drink")
+    
+    @task()
+    def non_alcoholic_drink():
+        print("Non-alcoholic drink")
     # get_mocktail = PythonOperator(
     #     task_id="get_mocktail",
     #     python_callable=_get_mocktail,
@@ -62,6 +80,6 @@ def extractor():
     #     ti.xcom_pull(key="abc", task_ids="checks.validate_cocktail_data") => syntax for using xcom pull from the task within task-group
     
   
-    get_cocktail >> checks()
+    get_cocktail >> checks() >> branch_cocktail_type() >> [alcoholic_drink(), non_alcoholic_drink()]
 
 extractor()
