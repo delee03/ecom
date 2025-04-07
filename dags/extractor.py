@@ -12,6 +12,7 @@ from include.extractor.callbacks import _handle_failed_dagrun, _handle_check_siz
     start_date=datetime(2025, 3, 3),
     schedule='@daily',
     catchup=False,
+    tags=(["team_a", "extractor", "pii"]),
     default_args={
         "retries": 2, 
         "retry_delay": duration(seconds=2), 

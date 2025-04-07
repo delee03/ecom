@@ -24,4 +24,5 @@ def _get_mocktail():
 def _check_size(ti = None):
     size = ti.xcom_pull(key='request_size', task_ids='get_cocktail')
     logger.info(f"Loggin _ Size of request is {size}")
-    raise AirflowException()
+    if size <= 0:
+        raise AirflowException()

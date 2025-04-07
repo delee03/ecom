@@ -51,7 +51,7 @@ def _process_data():
     catchup=False,
     description="This DAG processes ecommerce data pipline",
     tags=(["team_a", "ecom", "pii"]),
-    default_args={"retries": 1},
+    default_args={"retries": 2},
     dagrun_timeout=duration(minutes=20),
     max_consecutive_failed_dag_runs=2,
     # max_active_runs=1,
