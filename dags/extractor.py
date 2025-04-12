@@ -5,9 +5,7 @@ from include.datasets import DATASET_COCKTAIL, DATASET_MOCKTAIL
 from include.tasks import _get_cocktail, _get_mocktail, _check_size, _validate_cocktail_data
 from include.extractor.callbacks import _handle_failed_dagrun, _handle_check_size
 import json
-import json
-import json
-import json
+from airflow.utils.trigger_rule import TriggerRule
 
 
  # Run this to check local and UI  : astro dev run dags test dag_id date_range
@@ -79,7 +77,16 @@ def extractor():
     # def store_value(ti=None):
     #     ti.xcom_pull(key="abc", task_ids="checks.validate_cocktail_data") => syntax for using xcom pull from the task within task-group
     
+    @task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS, templates_dict={'the_runtime_date': '{{ds}}'})
+    def clean_data(templates_dict):
+        import os
+        if os.path.exists(DATASET_COCKTAIL.uri):
+            os.remove(DATASET_COCKTAIL.uri)
+            print(f"File {DATASET_COCKTAIL.uri} has been deleted.")
+        else:
+            print(f"File {DATASET_COCKTAIL.uri} does not exist.")
+        print(f"Data is cleaned for the date {templates_dict['the_runtime_date']}")
   
-    get_cocktail >> checks() >> branch_cocktail_type() >> [alcoholic_drink(), non_alcoholic_drink()]
+    get_cocktail >> checks() >> branch_cocktail_type() >> [alcoholic_drink(), non_alcoholic_drink()] >> clean_data()
 
 extractor()
